@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import Workflows from "./pages/Workflows";
 import Social from "./pages/Social";
 import Email from "./pages/Email";
+import Community from "./pages/Community";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -23,16 +24,7 @@ const App = () => (
           <Route path="/workflows" element={<Workflows />} />
           <Route path="/social" element={<Social />} />
           <Route path="/email" element={<Email />} />
-          <Route
-            path="/community"
-            element={
-              <PlaceholderPage
-                title="Community"
-                accentWord="Hub"
-                subtitle="Monitor and engage with your community members"
-              />
-            }
-          />
+          <Route path="/community" element={<Community />} />
           <Route
             path="/influencers"
             element={
