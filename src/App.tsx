@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Workflows from "./pages/Workflows";
 import Social from "./pages/Social";
+import Email from "./pages/Email";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -21,16 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/workflows" element={<Workflows />} />
           <Route path="/social" element={<Social />} />
-          <Route
-            path="/email"
-            element={
-              <PlaceholderPage
-                title="Email"
-                accentWord="Marketing"
-                subtitle="Manage email sequences and subscriber engagement"
-              />
-            }
-          />
+          <Route path="/email" element={<Email />} />
           <Route
             path="/community"
             element={
