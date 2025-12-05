@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# Welcome to bevvy_bullet project
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/c19424e5-9b22-46f9-9eec-39de8cd09282
+
 
 ## How can I edit this code?
 
@@ -62,7 +62,7 @@ This project is built with:
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/c19424e5-9b22-46f9-9eec-39de8cd09282) and click on Share -> Publish.
+
 
 ## Can I connect a custom domain to my Lovable project?
 
@@ -70,4 +70,4 @@ Yes, you can!
 
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+
