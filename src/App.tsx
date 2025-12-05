@@ -8,6 +8,7 @@ import Workflows from "./pages/Workflows";
 import Social from "./pages/Social";
 import Email from "./pages/Email";
 import Community from "./pages/Community";
+import Influencers from "./pages/Influencers";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -25,16 +26,7 @@ const App = () => (
           <Route path="/social" element={<Social />} />
           <Route path="/email" element={<Email />} />
           <Route path="/community" element={<Community />} />
-          <Route
-            path="/influencers"
-            element={
-              <PlaceholderPage
-                title="Influencer"
-                accentWord="Hub"
-                subtitle="Track influencer partnerships and outreach"
-              />
-            }
-          />
+          <Route path="/influencers" element={<Influencers />} />
           <Route
             path="/content"
             element={
