@@ -11,6 +11,8 @@ import Community from "./pages/Community";
 import Influencers from "./pages/Influencers";
 import Content from "./pages/Content";
 import Finance from "./pages/Finance";
+import Kickstarter from "./pages/Kickstarter";
+import Testing from "./pages/Testing";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -31,26 +33,8 @@ const App = () => (
           <Route path="/influencers" element={<Influencers />} />
           <Route path="/content" element={<Content />} />
           <Route path="/finance" element={<Finance />} />
-          <Route
-            path="/kickstarter"
-            element={
-              <PlaceholderPage
-                title="Kickstarter"
-                accentWord="Live"
-                subtitle="Real-time campaign monitoring and backer management"
-              />
-            }
-          />
-          <Route
-            path="/testing"
-            element={
-              <PlaceholderPage
-                title="A/B Testing"
-                accentWord="Lab"
-                subtitle="Optimize campaigns with data-driven experiments"
-              />
-            }
-          />
+          <Route path="/kickstarter" element={<Kickstarter />} />
+          <Route path="/testing" element={<Testing />} />
           <Route
             path="/settings"
             element={
