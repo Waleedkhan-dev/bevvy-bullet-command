@@ -10,6 +10,7 @@ import Email from "./pages/Email";
 import Community from "./pages/Community";
 import Influencers from "./pages/Influencers";
 import Content from "./pages/Content";
+import Finance from "./pages/Finance";
 import PlaceholderPage from "./pages/PlaceholderPage";
 import NotFound from "./pages/NotFound";
 
@@ -29,16 +30,7 @@ const App = () => (
           <Route path="/community" element={<Community />} />
           <Route path="/influencers" element={<Influencers />} />
           <Route path="/content" element={<Content />} />
-          <Route
-            path="/finance"
-            element={
-              <PlaceholderPage
-                title="Financial"
-                accentWord="Tracker"
-                subtitle="Monitor revenue, expenses, and projections"
-              />
-            }
-          />
+          <Route path="/finance" element={<Finance />} />
           <Route
             path="/kickstarter"
             element={
