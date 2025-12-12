@@ -26,8 +26,8 @@ const LoginPage = () => {
 
     if (error) return setError(error.message);
 
+    // Admin Email Check
     const ADMIN_EMAIL = data.user?.email;
-    console.log('ADMIN_EMAIL login', ADMIN_EMAIL);
 
     if (data?.user?.email !== ADMIN_EMAIL) {
       setError('Access Denied. Only admin can login.');

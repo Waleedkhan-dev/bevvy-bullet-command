@@ -13,10 +13,11 @@ import Content from './pages/Content';
 import Finance from './pages/Finance';
 import Kickstarter from './pages/Kickstarter';
 import Testing from './pages/Testing';
-import PlaceholderPage from './pages/PlaceholderPage';
+
 import NotFound from './pages/NotFound';
 import LoginPage from './components/login';
 import AdminRoute from './components/layout/AdminRoute';
+import SettingsPage from './pages/Settings';
 
 const queryClient = new QueryClient();
 
@@ -39,16 +40,7 @@ const App = () => (
             <Route path='/finance' element={<Finance />} />
             <Route path='/kickstarter' element={<Kickstarter />} />
             <Route path='/testing' element={<Testing />} />
-            <Route
-              path='/settings'
-              element={
-                <PlaceholderPage
-                  title='Settings'
-                  accentWord='& Config'
-                  subtitle='Manage integrations, team, and preferences'
-                />
-              }
-            />
+            <Route path='/settings' element={<SettingsPage />} />
             <Route path='*' element={<NotFound />} />
           </Route>
         </Routes>
