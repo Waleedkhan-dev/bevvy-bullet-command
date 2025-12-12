@@ -12,7 +12,6 @@ const AdminRoute: React.FC = () => {
   if (!user || user.email !== ADMIN_EMAIL) {
     return <Navigate to='/login' replace />;
   }
-
   return <Outlet />;
 };
 
