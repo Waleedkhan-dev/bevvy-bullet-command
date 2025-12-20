@@ -83,7 +83,6 @@ export default function SettingsPage() {
       </motion.div>
 
       <div className='flex flex-col lg:flex-row gap-8'>
-        {/* Sidebar Navigation */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -110,7 +109,6 @@ export default function SettingsPage() {
           />
         </motion.div>
 
-        {/* Main Content Area */}
         <motion.div
           layout
           initial={{ opacity: 0, scale: 0.95 }}
