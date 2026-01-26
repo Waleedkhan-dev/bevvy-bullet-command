@@ -15,7 +15,7 @@ import Kickstarter from './pages/Kickstarter';
 import Testing from './pages/Testing';
 
 import NotFound from './pages/NotFound';
-import LoginPage from './components/login';
+// import LoginPage from './components/login';
 import AdminRoute from './components/layout/AdminRoute';
 import SettingsPage from './pages/Settings';
 
@@ -28,7 +28,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path='/login' element={<LoginPage />} />
+          {/* <Route path='/login' element={<LoginPage />} /> */}
           <Route path='/' element={<AdminRoute />}>
             <Route path='/' element={<Index />} />
             <Route path='/workflows' element={<Workflows />} />
