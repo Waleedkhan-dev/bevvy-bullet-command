@@ -10,6 +10,10 @@
 @tailwind components;
 @tailwind utilities;
 
+
+.swal-top-layer {
+  z-index: 999999 !important;
+}
 @layer base {
   :root {
     /* Mission Control Dark Theme */

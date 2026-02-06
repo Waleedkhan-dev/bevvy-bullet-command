@@ -22,6 +22,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { getLatestDiscordAnalytics, DiscordAnalytics } from '@/api/discordAnalytics';
+
+
 
 const memberMetrics = [
   { label: 'Total Members', value: 287, icon: Users, color: 'primary' },
@@ -30,13 +34,16 @@ const memberMetrics = [
   { label: 'Beta Testers', value: 12, icon: FlaskConical, color: 'primary' },
 ];
 
-const segmentData = [
-  { name: 'Regular', count: 198, percentage: 69, color: 'bg-muted' },
-  { name: 'VIP', count: 34, percentage: 12, color: 'bg-secondary' },
-  { name: 'Beta Testers', count: 12, percentage: 4, color: 'bg-primary' },
-  { name: 'Launch Squad', count: 38, percentage: 13, color: 'bg-accent' },
-  { name: 'Ambassadors', count: 5, percentage: 2, color: 'bg-warning' },
-];
+const getSegmentData = (analytics: DiscordAnalytics | null | undefined) => {
+  const total = analytics?.total_members || 1;
+  return [
+    { name: 'Regular', count: analytics?.regular_members ?? 0, percentage: Math.round(((analytics?.regular_members ?? 0) / total) * 100), color: 'bg-muted' },
+    { name: 'VIP', count: analytics?.vip_members ?? 0, percentage: Math.round(((analytics?.vip_members ?? 0) / total) * 100), color: 'bg-secondary' },
+    { name: 'Beta Testers', count: analytics?.betatester_members ?? 0, percentage: Math.round(((analytics?.betatester_members ?? 0) / total) * 100), color: 'bg-primary' },
+    { name: 'Mods', count: analytics?.mods ?? 0, percentage: Math.round(((analytics?.mods ?? 0) / total) * 100), color: 'bg-accent' },
+    { name: 'No Role', count: analytics?.no_role_assigned ?? 0, percentage: Math.round(((analytics?.no_role_assigned ?? 0) / total) * 100), color: 'bg-warning' },
+  ];
+};
 
 const channels = [
   { name: '#general', messages: 127, active: true },
@@ -109,7 +116,15 @@ const recentActivity = [
   { type: 'badge', user: 'Mike T.', time: '1h ago', channel: 'Beta Tester' },
 ];
 
+
 export default function Community() {
+  const { data: discordAnalytics, isLoading } = useQuery({
+    queryKey: ["discord_analytics"],
+    queryFn: getLatestDiscordAnalytics,
+  });
+
+  console.log("discordAnalytics", discordAnalytics);
+  
   return (
     <AppLayout>
       <motion.div
@@ -125,9 +140,13 @@ export default function Community() {
         </p>
       </motion.div>
 
-      {/* Member Metrics */}
       <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
-        {memberMetrics.map((metric, index) => (
+        {[
+          { label: 'Total Members', value: discordAnalytics?.total_members ?? 0, icon: Users, color: 'primary' },
+          { label: 'Active Today', value: discordAnalytics?.active_members_today ?? 0, icon: UserCheck, color: 'accent' },
+          { label: 'VIP Members', value: discordAnalytics?.vip_members ?? 0, icon: Crown, color: 'secondary' },
+          { label: 'Beta Testers', value: discordAnalytics?.betatester_members ?? 0, icon: FlaskConical, color: 'primary' },
+        ].map((metric, index) => (
           <motion.div
             key={metric.label}
             initial={{ opacity: 0, y: 20 }}
@@ -142,7 +161,7 @@ export default function Community() {
                       {metric.label}
                     </p>
                     <p className='text-3xl font-mono font-bold text-foreground mt-1'>
-                      {metric.value.toLocaleString()}
+                      {isLoading ? '...' : metric.value.toLocaleString()}
                     </p>
                   </div>
                   <div className={`p-3 rounded-lg bg-${metric.color}/10`}>
@@ -170,7 +189,7 @@ export default function Community() {
               </CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
-              {segmentData.map((segment) => (
+              {getSegmentData(discordAnalytics).map((segment) => (
                 <div key={segment.name} className='space-y-2'>
                   <div className='flex justify-between text-sm'>
                     <span className='text-foreground'>{segment.name}</span>
@@ -208,7 +227,7 @@ export default function Community() {
               <div className='flex items-center gap-4 mb-4 p-3 bg-muted/20 rounded-lg'>
                 <div className='text-center'>
                   <p className='text-3xl font-mono font-bold text-primary'>
-                    385
+                    {discordAnalytics?.channels_analytics.map((msg,index)=>msg.message_count).reduce((a, b) => a + b, 0) ?? 0}
                   </p>
                   <p className='text-xs text-muted-foreground'>
                     Messages Today
@@ -264,7 +283,7 @@ export default function Community() {
             </CardHeader>
             <CardContent>
               <div className='space-y-3'>
-                {recentActivity.map((activity, index) => (
+                {discordAnalytics?.channels_analytics.map((activity, index) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, x: -20 }}
@@ -298,10 +317,10 @@ export default function Community() {
                     </div>
                     <div className='flex-1 min-w-0'>
                       <p className='text-sm text-foreground truncate'>
-                        {activity.user}
+                        {activity.channel_name || activity.channel}
                       </p>
                       <p className='text-xs text-muted-foreground'>
-                        {activity.channel}
+                        {activity.newest_message}
                       </p>
                     </div>
                     <span className='text-xs text-muted-foreground'>
@@ -316,7 +335,7 @@ export default function Community() {
       </div>
 
       <div className='grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6'>
-        {/* Testimonial System */}
+     
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

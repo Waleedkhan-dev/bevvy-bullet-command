@@ -14,3 +14,17 @@ export const getImageContent = async () => {
   console.log("Fetched data:", data);
   return data;
 };
+
+
+export const deleteImageContent =  async (id:number)=>{
+  const {error } = await supabase
+    .from("image_content")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Supabase error:", error);
+    throw error;
+  }
+  return id;
+}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import Swal from "sweetalert2";
 import {
   Select,
   SelectContent,
@@ -34,6 +35,14 @@ import {
   LayoutGrid,
 } from "lucide-react";
 import { useState } from "react";
+import { QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteImageContent, getImageContent } from "@/api/imageContent";
+import FacebookPostPreview from "@/components/FacebookPostPreview";
+import InstagramPostPreview from "@/components/InstagramPostPreview";
+import TikTokPostPreview from "@/components/TikTokPostPreview";
+import { FaFacebook, FaInstagram, FaTiktok } from "react-icons/fa";
+import { cn } from "@/lib/utils";
+import { set } from "date-fns";
 
 const aiStats = [
   { type: "Text Content", icon: FileText, count: 127, approved: 98, color: "from-cyan-500/20 to-cyan-500/5", borderColor: "border-cyan-500/30", iconColor: "text-cyan-400" },
@@ -50,13 +59,6 @@ const platforms = [
   { id: "youtube", label: "YouTube" },
 ];
 
-const approvalQueue = [
-  { id: 1, title: "Morning motivation post", type: "text", platform: "Instagram", generated: "2 hours ago", preview: "Start your day with energy! 🚀 Our new product..." },
-  { id: 2, title: "Product showcase reel", type: "video", platform: "TikTok", generated: "3 hours ago", preview: "15s vertical video showing product features" },
-  { id: 3, title: "Behind the scenes", type: "image", platform: "Instagram", generated: "4 hours ago", preview: "Team working on product development" },
-  { id: 4, title: "Launch countdown", type: "text", platform: "X", generated: "5 hours ago", preview: "47 days until launch! Are you ready?" },
-  { id: 5, title: "Testimonial highlight", type: "video", platform: "YouTube", generated: "6 hours ago", preview: "30s testimonial from beta tester" },
-];
 
 const videoPipeline = [
   { id: 1, name: "Product Demo v3", stage: "AI Edit", progress: 65, eta: "~12 min" },
@@ -121,6 +123,32 @@ export default function Content() {
   const [selectedType, setSelectedType] = useState("text");
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>(["tiktok", "instagram"]);
   const [theme, setTheme] = useState("");
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [selectedPlatform, setSelectedPlatform] = useState<string>("facebook");
+  const [editedCaptions, setEditedCaptions] = useState<any>({});
+  const [postStatus, setPostStatus] = useState<any>({});
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [selectedPlatformsToPost, setSelectedPlatformsToPost] = useState<string[]>([]);
+const queryClient = useQueryClient();
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["image_content"],
+    queryFn: getImageContent,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteImageContent,
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData(["image_content"], (oldData: any) => {
+        if (!oldData) return [];
+        return oldData.filter((item: any) => item.id !== deletedId);
+        setSelectedItem(null);
+      });
+    },
+      onError: (error) => {
+    console.error(error);
+    alert("Failed to delete post");
+  },
+  })
 
   const togglePlatform = (platformId: string) => {
     setSelectedPlatforms(prev =>
@@ -129,6 +157,33 @@ export default function Content() {
         : [...prev, platformId]
     );
   };
+
+const handleDeletePost = async (item: any) => {
+  const result = await Swal.fire({
+    title: "Are you sure?",
+    text: "This post will be permanently deleted!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: "Yes, delete it",
+  });
+
+  if (result.isConfirmed) {
+    deleteMutation.mutate(item.id, {
+      onSuccess: () => {
+        Swal.fire({
+          title: "Deleted!",
+          text: "Post has been deleted.",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      },
+    });
+  }
+};
+
 
   return (
     <AppLayout>
@@ -339,43 +394,149 @@ export default function Content() {
                     Approval Queue
                   </CardTitle>
                   <Badge variant="outline" className="border-warning/30 text-warning">
-                    {approvalQueue.length} pending
+                    {isLoading ? "..." : data.length} pending
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {approvalQueue.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.4 + index * 0.05 }}
-                    className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10 hover:border-primary/30 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`p-2 rounded-lg ${getTypeColor(item.type)}`}>
-                        {getTypeIcon(item.type)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium text-foreground truncate">{item.title}</div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {item.platform} • {item.generated}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1 ml-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-white/10">
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-success/20 text-success">
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-gradient bg-muted/30">
+                     
+                    
+                     
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isLoading ? (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                            Loading content...
+                          </td>
+                        </tr>
+                      ) : data && data.length > 0 ? (
+                        data.map((item: any) => (
+                          <tr
+                            key={item.id}
+                            className="border-b flex justify-between border-gray-700/50 hover:bg-accent/5 transition-colors duration-200"
+                          >
+                            <td className="px-4 py-4">
+                              {item.image_url ? (
+                                <img
+                                  src={item.image_url}
+                                  alt="content"
+                                  className="w-8 h-8 rounded-lg object-cover shadow-lg border border-gray-600/30 hover:scale-105 transition-transform"
+                                />
+                              ) : (
+                                <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                                  No image
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-4 text-sm text-foreground max-w-[450px]">
+                              <p>{item.title  }</p>
+                              <p className="line-clamp-1 cursor-help text-white w-full" title={item.facebook_caption || "No caption"}>
+                                {item.facebook_caption ? (
+                                  <span className="text-white">{item.facebook_caption}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </p>
+                            </td>
+                            {/* <td className="px-4 py-4 text-sm text-foreground max-w-[150px]">
+                              <p className="line-clamp-2 cursor-help" title={item.instagram_caption || "No caption"}>
+                                {item.instagram_caption ? (
+                                  <span className="text-purple-400/80">{item.instagram_caption}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </p>
+                            </td>
+                            <td className="px-4 py-4 text-sm text-foreground max-w-[150px]">
+                              <p className="line-clamp-2 cursor-help" title={item.tiktok_caption || "No caption"}>
+                                {item.tiktok_caption ? (
+                                  <span className="text-pink-400/80">{item.tiktok_caption}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </p>
+                            </td> */}
+                            {/* <td className="px-4 py-4 text-sm text-muted-foreground whitespace-nowrap">
+                              {new Date(item.created_at).toLocaleDateString()} <br />
+                              <span className="text-xs">{new Date(item.created_at).toLocaleTimeString()}</span>
+                            </td> */}
+                            <td className="px-4 py-4">
+                              <div>
+                             
+                                <div className="flex items-center gap-1 ml-2">
+                        <div
+                                  
+                               
+                                  onClick={() => {
+                                    setSelectedItem(item);
+                                    setSelectedPlatform("facebook");
+                                    setEditedCaptions({
+                                      facebook: item.facebook_caption || "",
+                                      instagram: item.instagram_caption || "",
+                                      tiktok: item.tiktok_caption || "",
+                                    });
+                                  }}
+                                  className="gap-1 cursor-pointer inline-flex items-center px-2 py-1 border border-gray-600 rounded-lg text-xs text-foreground hover:bg-accent/10 transition-colors"
+                                >
+                                  <Eye className="w-4 h-4" />
+                            
+                                </div>
+                      <Button
+                       onClick={() => {
+                                    setSelectedItem(item);
+                                    setSelectedPlatform("facebook");
+                                    setEditedCaptions({
+                                      facebook: item.facebook_caption || "",
+                                      instagram: item.instagram_caption || "",
+                                      tiktok: item.tiktok_caption || "",
+                                    });
+                                  }}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 hover:bg-success/20 text-success"
+                      >
                         <Check className="w-4 h-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/20 text-destructive">
+                      <Button
+                        onClick={() => handleDeletePost(item)}
+  variant="ghost"
+  size="icon"
+              
+                      
+                        className="h-8 w-8 hover:bg-destructive/20 text-destructive"
+                      >
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
-                  </motion.div>
-                ))}
+                                {/* <select
+                                  value={postStatus[item.id] || "pending"}
+                                  onChange={(e) => setPostStatus({ ...postStatus, [item.id]: e.target.value })}
+                                  className="border border-gray-600 rounded-lg px-2 py-1 bg-background text-foreground text-xs font-medium hover:border-accent transition-colors cursor-pointer"
+                                >
+                                  <option value="pending">Pending</option>
+                                  <option value="approved">Approved</option>
+                                  <option value="rejected">Rejected</option>
+                                </select> */}
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                            No content pending. All caught up!
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </CardContent>
             </Card>
           </motion.div>
@@ -521,6 +682,231 @@ export default function Content() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Preview Modal */}
+      {selectedItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background border border-accent/30 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+          >
+            {/* Modal Header */}
+            <div className="sticky top-0 bg-background/80 backdrop-blur border-b border-gray-700 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-mono font-bold text-foreground">Post Preview & Editor</h2>
+              <button
+                onClick={() => setSelectedItem(null)}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6">
+              {/* Platform Selector */}
+              <div className="flex gap-2 mb-6">
+                {[
+                  { id: "facebook", icon: <FaFacebook />, label: "Facebook", color: "from-blue-600 to-blue-800" },
+                  { id: "instagram", icon: <FaInstagram />, label: "Instagram", color: "from-purple-500 to-orange-500" },
+                  { id: "tiktok", icon: <FaTiktok />, label: "TikTok", color: "from-pink-500 to-cyan-500" },
+                ].map((platform) => (
+                  <button
+                    key={platform.id}
+                    onClick={() => setSelectedPlatform(platform.id)}
+                    className={cn(
+                      "px-4 py-2 rounded-lg flex items-center gap-2 font-semibold transition-all",
+                      selectedPlatform === platform.id
+                        ? `bg-gradient-to-r ${platform.color} text-white shadow-lg`
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    )}
+                  >
+                    {platform.icon}
+                    {platform.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Preview */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground mb-4">Preview</h3>
+
+                  {selectedPlatform === "facebook" && (
+                    <FacebookPostPreview
+                      caption={editedCaptions.facebook || ""}
+                      imageUrl={selectedItem.image_url}
+                    />
+                  )}
+
+                  {selectedPlatform === "instagram" && (
+                    <InstagramPostPreview
+                      caption={editedCaptions.instagram || ""}
+                      imageUrl={selectedItem.image_url}
+                    />
+                  )}
+
+                  {selectedPlatform === "tiktok" && (
+                    <TikTokPostPreview
+                      caption={editedCaptions.tiktok || ""}
+                      imageUrl={selectedItem.image_url}
+                    />
+                  )}
+                </div>
+
+                {/* Editor */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-foreground mb-4">Edit Caption</h3>
+                  <Textarea
+                    value={editedCaptions[selectedPlatform] || ""}
+                    onChange={(e) =>
+                      setEditedCaptions({
+                        ...editedCaptions,
+                        [selectedPlatform]: e.target.value,
+                      })
+                    }
+                    placeholder={`Enter ${selectedPlatform} caption...`}
+                    className="w-full h-64 bg-muted border border-gray-600 rounded-lg p-4 text-foreground placeholder-muted-foreground focus:outline-none focus:border-accent resize-none"
+                  />
+                  <div className="text-sm text-muted-foreground">
+                    {editedCaptions[selectedPlatform]?.length || 0} characters
+                  </div>
+                  <div className="flex gap-3">
+                    <Button
+                      onClick={() => setShowPublishModal(true)}
+                      className="flex-1 bg-primary hover:bg-primary/80"
+                    >
+                      Post to Platforms
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedItem(null)}
+                    >
+                      Close
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Publish Modal - Choose Platforms */}
+      {showPublishModal && selectedItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background border border-accent/30 rounded-xl max-w-2xl w-full"
+          >
+            {/* Header */}
+            <div className="bg-background/80 backdrop-blur border-b border-gray-700 p-6 flex items-center justify-between">
+              <h2 className="text-2xl font-mono font-bold text-foreground">Choose Platforms to Post</h2>
+              <button
+                onClick={() => {
+                  setShowPublishModal(false);
+                  setSelectedPlatformsToPost([]);
+                }}
+                className="p-2 hover:bg-muted rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-8">
+              <p className="text-muted-foreground mb-6">Select which platforms you want to post this content to:</p>
+
+              {/* Platform Selection Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                {[
+                  { id: "facebook", label: "Facebook", icon: <FaFacebook className="w-5 h-5" />, color: "from-blue-600 to-blue-800" },
+                  { id: "instagram", label: "Instagram", icon: <FaInstagram className="w-5 h-5" />, color: "from-purple-500 to-orange-500" },
+                  { id: "tiktok", label: "TikTok", icon: <FaTiktok className="w-5 h-5" />, color: "from-pink-500 to-cyan-500" },
+                ].map((platform) => (
+                  <button
+                    key={platform.id}
+                    onClick={() => {
+                      if (selectedPlatformsToPost.includes(platform.id)) {
+                        setSelectedPlatformsToPost(selectedPlatformsToPost.filter(p => p !== platform.id));
+                      } else {
+                        setSelectedPlatformsToPost([...selectedPlatformsToPost, platform.id]);
+                      }
+                    }}
+                    className={cn(
+                      "p-4 rounded-lg border-2 transition-all font-semibold flex items-center justify-center gap-2",
+                      selectedPlatformsToPost.includes(platform.id)
+                        ? `bg-gradient-to-r ${platform.color} text-white border-accent`
+                        : "bg-muted text-muted-foreground border-gray-700 hover:border-accent"
+                    )}
+                  >
+                    {platform.icon}
+                    {platform.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Quick Select Buttons */}
+              <div className="flex gap-3 mb-8">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setSelectedPlatformsToPost(["facebook", "instagram", "tiktok"])}
+                >
+                  Select All
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setSelectedPlatformsToPost([])}
+                >
+                  Clear All
+                </Button>
+              </div>
+
+              {/* Selected Count */}
+              <div className="bg-muted p-4 rounded-lg mb-8">
+                <p className="text-foreground font-semibold">
+                  Posting to {selectedPlatformsToPost.length} platform{selectedPlatformsToPost.length !== 1 ? "s" : ""}
+                </p>
+                {selectedPlatformsToPost.length > 0 && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {selectedPlatformsToPost.map(p => p.charAt(0).toUpperCase() + p.slice(1)).join(", ")}
+                  </p>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    console.log("Posting to platforms:", selectedPlatformsToPost);
+                    console.log("Content:", selectedItem);
+                    console.log("Captions:", editedCaptions);
+                    // Here you would call the API to post to selected platforms
+                    setShowPublishModal(false);
+                    setSelectedItem(null);
+                    setSelectedPlatformsToPost([]);
+                  }}
+                  disabled={selectedPlatformsToPost.length === 0}
+                  className="flex-1 bg-primary hover:bg-primary/80 disabled:opacity-50"
+                >
+                  Post Now
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowPublishModal(false);
+                    setSelectedPlatformsToPost([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </AppLayout>
   );
 }
