@@ -183,7 +183,15 @@ const handleDeletePost = async (item: any) => {
     });
   }
 };
-
+const PostToPlateform = (item: any) => {
+  setSelectedItem(item);
+  setEditedCaptions({
+    facebook: item.facebook_caption || "",
+    instagram: item.instagram_caption || "",
+    tiktok: item.tiktok_caption || "",
+  });
+  setShowPublishModal(true);
+}
 
   return (
     <AppLayout>
@@ -488,15 +496,8 @@ const handleDeletePost = async (item: any) => {
                             
                                 </div>
                       <Button
-                       onClick={() => {
-                                    setSelectedItem(item);
-                                    setSelectedPlatform("facebook");
-                                    setEditedCaptions({
-                                      facebook: item.facebook_caption || "",
-                                      instagram: item.instagram_caption || "",
-                                      tiktok: item.tiktok_caption || "",
-                                    });
-                                  }}
+                      
+              onClick={() => PostToPlateform(item)}
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 hover:bg-success/20 text-success"
@@ -684,7 +685,7 @@ const handleDeletePost = async (item: any) => {
       </div>
 
       {/* Preview Modal */}
-      {selectedItem && (
+      {selectedItem && !showPublishModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
